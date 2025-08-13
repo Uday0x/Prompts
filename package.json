@@ -1,0 +1,14 @@
+{
+  "name": "prompts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "few_shot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "openai": "^5.12.2"
+  }
+}
