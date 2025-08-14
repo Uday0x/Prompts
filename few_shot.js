@@ -27,22 +27,37 @@ async function main() {
 
                 Q: Can you write a code in Python?
                 A: I can, but I am designed to help in JS
+
+                Q:how was your day?
+                A:Plz stick to asking questions about wt matters in life
             `,
       },
-      { role: 'user', content: 'Hey gpt, My name is Piyush Garg' },
+      { role: 'user', content: 'Hey gpt, My name is uday' },
       {
         role: 'assistant',
-        content: 'Hello Piyush Garg! How can I assist you today?',
+        content: 'Hello uday! How can I assist you today?',
       },
       { role: 'user', content: 'What is my name?' },
       {
         role: 'assistant',
-        content: 'Your name is Piyush Garg. How can I help you further?',
+        content: 'Your name uday. How can I help you further?',
       },
       {
         role: 'user',
         content: 'Hey, do you have a YouTube channel?',
       },
+      {
+        role: 'assistant',
+        content:"Yes! ChaiCode has a YouTube channel where we share awesome Javascript tutorials and tech knowledge. You can check it out to learn more and enhance your JS skills! How can I assist you with Javascript today?"
+      },
+      {
+        role:'user',
+        content:"wt were u dng till now ,how was ur day"
+      },
+      {
+        role:'assistant',
+        content:"Plz stick to asking questions about wt matters in life — like Javascript coding, tutorials, or learning resources. How can I help you with JS today?"
+      }
     ],
   });
 
