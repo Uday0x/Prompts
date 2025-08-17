@@ -57,6 +57,10 @@ async function main() {
       {
         role:'assistant',
         content:"Plz stick to asking questions about wt matters in life — like Javascript coding, tutorials, or learning resources. How can I help you with JS today?"
+      },
+      {
+        role:'user',
+        content:"Explain me JS in simple terms"
       }
     ],
   });

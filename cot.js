@@ -1,100 +1,87 @@
-import 'dotenv/config';
-import { OpenAI } from 'openai';
+import 'dotenv/config'
 
+import { OpenAI } from 'openai/client.js'
+import { GoogleGenAI } from "@google/genai";
 const client = new OpenAI();
 
 async function main() {
-    // These api calls are stateless (Chain Of Thought)
-    const SYSTEM_PROMPT = `
-    You are an AI assistant who works on START, THINK and OUTPUT format.
-    For a given user query first think and breakdown the problem into sub problems.
-    You should always keep thinking and thinking before giving the actual output.
-    Also, before outputing the final result to user you must check once if everything is correct.
-
-    Rules:
-    - Strictly follow the output JSON format
-    - Always follow the output in sequence that is START, THINK, EVALUATE and OUTPUT.
-    - After evey think, there is going to be an EVALUATE step that is performed manually by someone and you need to wait for it.
-    - Always perform only one step at a time and wait for other step.
-    - Alway make sure to do multiple steps of thinking before giving out output.
-
-    Output JSON Format:
-    { "step": "START | THINK | EVALUATE | OUTPUT", "content": "string" }
-
-    Example:
-    User: Can you solve 3 + 4 * 10 - 4 * 3
-    ASSISTANT: { "step": "START", "content": "The user wants me to solve 3 + 4 * 10 - 4 * 3 maths problem" } 
-    ASSISTANT: { "step": "THINK", "content": "This is typical math problem where we use BODMAS formula for calculation" } 
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" } 
-    ASSISTANT: { "step": "THINK", "content": "Lets breakdown the problem step by step" } 
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" } 
-    ASSISTANT: { "step": "THINK", "content": "As per bodmas, first lets solve all multiplications and divisions" }
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" }  
-    ASSISTANT: { "step": "THINK", "content": "So, first we need to solve 4 * 10 that is 40" } 
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" } 
-    ASSISTANT: { "step": "THINK", "content": "Great, now the equation looks like 3 + 40 - 4 * 3" }
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" } 
-    ASSISTANT: { "step": "THINK", "content": "Now, I can see one more multiplication to be done that is 4 * 3 = 12" } 
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" } 
-    ASSISTANT: { "step": "THINK", "content": "Great, now the equation looks like 3 + 40 - 12" } 
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" } 
-    ASSISTANT: { "step": "THINK", "content": "As we have done all multiplications lets do the add and subtract" } 
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" } 
-    ASSISTANT: { "step": "THINK", "content": "so, 3 + 40 = 43" } 
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" } 
-    ASSISTANT: { "step": "THINK", "content": "new equations look like 43 - 12 which is 31" } 
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" } 
-    ASSISTANT: { "step": "THINK", "content": "great, all steps are done and final result is 31" }
-    ASSISTANT: { "step": "EVALUATE", "content": "Alright, Going good" }  
-    ASSISTANT: { "step": "OUTPUT", "content": "3 + 4 * 10 - 4 * 3 = 31" } 
-  `;
+const SYSTEM_PROMPT = `
+    You rae Ai assitant who works on START,THINK and OUTPUT 
+    For a given Ser quesry first THINK and breakdown problem into sub problems
+    you should always keep thinking and thinking before giving the actual output 
+    alo ,ebfore outputting u must also check the final result before giving it to teh user
 
 
-    const messages = [
-        {
-            role: "system",
-            content: SYSTEM_PROMPT
-        },
-        {
-            role:'user',
-            content:'hey ,can u solve 4*6 -12 *34 /7 *21'
-        }
-    ];
+    RULES:
+        -strictly follow output JSON format
+        -always follow the output the output in sequence that is START,THINK,OUTPUT
+        -always perfoem one step at a time and wait for user confirmation before proceeding to the next step
+        -always make sure to do multiple steps of thinking before giving the final output
 
+        OUTPUT json format:
+        {step:"START",
+        |THINK | OUTPUT "}
+
+        Example:
+        Q:USER:can you solve 3+4*10-4*3
+        A: ASSITANT:{"step":"START","content":"the user wants me to solve the problem which is 3+4*10-4*3"}
+        A: ASSISTANT:{"step":"THINK","content":"THIS problem needs to be solved by applying BODMAS rule"}
+        A: ASSISTANT:{"step":"THINK","content":"lets break down the problem step by step"}
+        A: ASSISTANT:{"step":"THINK","content":"as per the BODMAS rule we need to solve the multiplication and division first, followed by addition and subtraction."}
+        A: ASSISTANT:{"step":"THINK","content":"first we need solve 4 * 10 that is 40"}
+        A: ASSISTANT:{"step":"THINK","content":"second we solve 3+40-4*3"}
+        A: ASSISTANT:{"step":"THINK","content":"Now i can c one more multpilcation be done"}
+        A: ASSISTANT:{"step":"THINK","content":"Now we need solve 4*3 as 12"}
+        A: ASSISTANT:{"step":"THINK","content":"now since we have finished the multiplications part we now shift to addition and subtraction"}
+        A: ASSISTANT:{"step":"THINK","content":"now we can solve 3+40 = 43"}
+        A: ASSISTANT:{"step":"THINK","content":"now new equation looks like 43-12"}
+        A: ASSISTANT:{"step":"THINK","content":"after solving the final sub-problem we get the answer as 31"}
+        A: ASSISTANT:{"step":"THINK","content":"All steps are done the final output is 31"}
+        A: ASSISTANT:{"step":"OUTPUT","content":"THE ANSWER IS:31"}
+`;
+
+
+const messages = [
+
+            {
+                role: "system",
+                content: SYSTEM_PROMPT
+            },
+            {role:"user","content":"hey can u solve 4 * 6-12*34/7*21"}
+ 
+];
     while(true){
-    const response = await client.chat.completions.create({
-        model:'gpt-4.1-mini',
-        messages:messages
+        const response = await client.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: messages,
     });
 
-    const rawcontent = response.choices[0].message.content;
-    const parsedContent = JSON.parse(rawcontent);
 
-    messages.push({
+    const rawContent = response.choices[0].message.content;
+    const parsedContent =JSON.parse(rawContent);
+
+    messages.push({ 
         role:"assistant",
-        content:JSON.stringify(parsedContent)
+         content: JSON.stringify(parsedContent)
     });
 
     if(parsedContent.step === "START"){
-        console.log("❤️‍🔥",parsedContent.content);
-        continue;
+        console.log("🔥",parsedContent.content);
+        continue; //since we rae using while(true) //infinite loop
     }
+
     if(parsedContent.step === "THINK"){
-        console.log("🧠",parsedContent.content);
-
-        messages.push({
-            role:"developer",
-            content:JSON.stringify({
-                step:"EVALUATE",
-                content:"Nice, going good"
-            })
-        });
+        console.log("🤔",parsedContent.content);
         continue;
     }
-    if(parsedContent.step === "OUTPUT"){
-        console.log("😁",parsedContent);
 
+    if(parsedContent.step === "OUTPUT"){
+        console.log("💡",parsedContent.content);
         break;
     }
-}} 
-    main();
+}
+
+console.log("done ho gaya ji")
+
+}
+main();
