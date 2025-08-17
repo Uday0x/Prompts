@@ -1,87 +1,83 @@
 import 'dotenv/config'
-
 import { OpenAI } from 'openai/client.js'
-import { GoogleGenAI } from "@google/genai";
+
+const gemini = new OpenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+});
+
 const client = new OpenAI();
 
 async function main() {
-const SYSTEM_PROMPT = `
-    You rae Ai assitant who works on START,THINK and OUTPUT 
-    For a given Ser quesry first THINK and breakdown problem into sub problems
-    you should always keep thinking and thinking before giving the actual output 
-    alo ,ebfore outputting u must also check the final result before giving it to teh user
+  const SYSTEM_PROMPT = `
+    You are an AI assistant who works on START, THINK and OUTPUT.
+    For a given user query first THINK and break down problem into sub-problems.
+    You must always THINK multiple steps before giving OUTPUT.
+    Before final OUTPUT, every step must be EVALUATED by Google Gemini.
+    Always respond in JSON:
+    { "step": "START" | "THINK" | "EValuate" | "OUTPUT", "content": "..." }
+  `;
 
+  const messages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    { role: "user", content: "solve the problem of 3+4-167+43,Show step by step solution and also give the final answer clearly" }
+  ];
 
-    RULES:
-        -strictly follow output JSON format
-        -always follow the output the output in sequence that is START,THINK,OUTPUT
-        -always perfoem one step at a time and wait for user confirmation before proceeding to the next step
-        -always make sure to do multiple steps of thinking before giving the final output
+  let safety = 0;
 
-        OUTPUT json format:
-        {step:"START",
-        |THINK | OUTPUT "}
+  while (true) {
+    safety++;
+    if (safety > 20) {
+      console.log("⚠️ Exiting due to too many steps.");
+      break;
+    }
 
-        Example:
-        Q:USER:can you solve 3+4*10-4*3
-        A: ASSITANT:{"step":"START","content":"the user wants me to solve the problem which is 3+4*10-4*3"}
-        A: ASSISTANT:{"step":"THINK","content":"THIS problem needs to be solved by applying BODMAS rule"}
-        A: ASSISTANT:{"step":"THINK","content":"lets break down the problem step by step"}
-        A: ASSISTANT:{"step":"THINK","content":"as per the BODMAS rule we need to solve the multiplication and division first, followed by addition and subtraction."}
-        A: ASSISTANT:{"step":"THINK","content":"first we need solve 4 * 10 that is 40"}
-        A: ASSISTANT:{"step":"THINK","content":"second we solve 3+40-4*3"}
-        A: ASSISTANT:{"step":"THINK","content":"Now i can c one more multpilcation be done"}
-        A: ASSISTANT:{"step":"THINK","content":"Now we need solve 4*3 as 12"}
-        A: ASSISTANT:{"step":"THINK","content":"now since we have finished the multiplications part we now shift to addition and subtraction"}
-        A: ASSISTANT:{"step":"THINK","content":"now we can solve 3+40 = 43"}
-        A: ASSISTANT:{"step":"THINK","content":"now new equation looks like 43-12"}
-        A: ASSISTANT:{"step":"THINK","content":"after solving the final sub-problem we get the answer as 31"}
-        A: ASSISTANT:{"step":"THINK","content":"All steps are done the final output is 31"}
-        A: ASSISTANT:{"step":"OUTPUT","content":"THE ANSWER IS:31"}
-`;
-
-
-const messages = [
-
-            {
-                role: "system",
-                content: SYSTEM_PROMPT
-            },
-            {role:"user","content":"hey can u solve 4 * 6-12*34/7*21"}
- 
-];
-    while(true){
-        const response = await client.chat.completions.create({
-        model: "gpt-4.1-mini",
-        messages: messages,
+    const response = await client.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages,
     });
-
 
     const rawContent = response.choices[0].message.content;
-    const parsedContent =JSON.parse(rawContent);
+    const parsedContent = JSON.parse(rawContent);
 
-    messages.push({ 
-        role:"assistant",
-         content: JSON.stringify(parsedContent)
-    });
+    messages.push({ role: "assistant", content: JSON.stringify(parsedContent) });
 
-    if(parsedContent.step === "START"){
-        console.log("🔥",parsedContent.content);
-        continue; //since we rae using while(true) //infinite loop
+    if (parsedContent.step === "START") {
+      console.log("🔥", parsedContent.content);
+      continue;
     }
 
-    if(parsedContent.step === "THINK"){
-        console.log("🤔",parsedContent.content);
-        continue;
+    if (parsedContent.step === "THINK") {
+      console.log("🤔", parsedContent.content);
+
+      const geminiresponse = await gemini.chat.completions.create({
+        model: "gemini-2.5-pro",
+        messages: [
+          { role: "system", content: "You are a strict evaluator. Verify correctness of the reasoning." },
+          { role: "user", content: parsedContent.content }
+        ],
+      });
+
+      const verification = geminiresponse.choices[0].message?.content && "Verified by google gemini 😌";
+
+      messages.push({
+        role: "developer",
+        content: JSON.stringify({
+          step: "EValuate",
+          content: verification,
+        }),
+      });
+
+      continue;
     }
 
-    if(parsedContent.step === "OUTPUT"){
-        console.log("💡",parsedContent.content);
-        break;
+    if (parsedContent.step === "OUTPUT") {
+      console.log("💡", parsedContent.content);
+      break;
     }
+  }
+
+  console.log("✅ done ho gaya ji");
 }
 
-console.log("done ho gaya ji")
-
-}
 main();
