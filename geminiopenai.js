@@ -11,10 +11,11 @@ const openai = new OpenAI({
 const response = await openai.chat.completions.create({
     model: "gemini-2.0-flash",
     messages: [
-        { role: "system", content: "You are a helpful assistant." },
+        { role: "system", content: "You are a helpful assistant. Alwasy give the output in JSON format with keys step and content " }
+        ,
         {
             role: "user",
-            content: "Explain to me how AI works",
+            content: "Explain to me how AI works in 2 lines",
         },
     ],
 });
